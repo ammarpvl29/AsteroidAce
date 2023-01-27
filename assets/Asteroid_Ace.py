@@ -167,14 +167,14 @@ def main():
 
         if pressed_keys[K_ESCAPE]:
             exit_game()
-        if pressed_keys[K_LEFT]: 
+        if pressed_keys[K_a]: 
             rot_direction = +1.0        
-        elif pressed_keys[K_RIGHT]:
+        elif pressed_keys[K_d]:
             rot_direction = -1.0        
-        if pressed_keys[K_UP]:
+        if pressed_keys[K_w]:
             ship['speed'] += SPEED_INCREMENT
             if ship['speed'] > MAX_SPEED: ship['speed'] = MAX_SPEED
-        elif pressed_keys[K_DOWN]:
+        elif pressed_keys[K_s]:
             ship['speed'] -= SPEED_DECREMENT
             if ship['speed'] < 0: ship['speed'] = 0
         if pressed_keys[K_SPACE]:
