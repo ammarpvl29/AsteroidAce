@@ -3,9 +3,10 @@ from pygame.locals import *
 from math import *
 from pygame import Vector2
 
+# Diambil dari https://stackoverflow.com/questions/7674790/bundling-data-files-with-pyinstaller-onefile/13790741#13790741 yaitu cara memanipulasi directory path dan
+# absolute path agar setelah mengkonversi .py ke .exe, .exe bisa mereferensikannya ke assets
 def resource_path(relative_path):
     try:
-    # PyInstaller creates a temp folder and stores path in _MEIPASS
         base_path = sys._MEIPASS
     except Exception:
         base_path = os.path.abspath(".")
@@ -15,107 +16,109 @@ def resource_path(relative_path):
 if platform.system() == 'Windows':
     os.environ['SDL_VIDEODRIVER'] = 'windib'
 
-# Colors: R G B values, how much red, green and blue
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-GREEN = (0, 255, 0)
-CARNATION = (255, 166, 201)
+# Membuat referensi gambar dari nilai RGB untuk hitam, putih, dan hijau
+HITAM = (0, 0, 0)
+PUTIH = (255, 255, 255)
+HIJAU = (0, 255, 0)
+MERAH_MUDA = (255, 166, 201)
 
-# Initialize our game
-SCR_SIZE = SCR_W, SCR_H = 640, 480
-SHIP_W, SHIP_H = 17, 21
-ROCK_W, ROCK_H = 51, 41
-NUM_OF_ROCKS = 3
+# Menginisialisasikan jendela (window) game
+UKURAN_WINDOW = LEBAR_WINDOW, TINGGI_WINDOW = 640, 480
+LEBAR_PESAWAT, TINGGI_PESAWAT = 17, 21
+LEBAR_ASTEROID, TINGGI_ASTEROID = 51, 41
+JUMLAH_ASTEROID = 3
 NUM_OF_ROCK_SPLIT = 5
-ADD_NEW_ROCK_RATE = 300
-SPEED_INCREMENT = 6
-SPEED_DECREMENT = 13
-MAX_SPEED = 200.0
+TINGKAT_ASTEROID_BARU = 300
+TAMBAH_KECEPATAN = 6
+KURANGI_KECEPATAN = 13
+KECEPATAN_MAKS = 200.0
 
-# Points that create the shape of our asteroid
-ROCK_SHAPE = [(5,0), (0,15), (0,30),
+# Fungsi nilai yang menciptakan bentuk asteroid
+BENTUK_ASTEROID = [(5,0), (0,15), (0,30),
               (15,40), (20,30), (30,40),
               (45,30), (45,25), (25,20),
               (45,10), (36,0), (25,5)]
 
-def exit_game():
+# Fungsi untuk exit game
+def exit():
     pygame.quit()
     sys.exit()
 
+# Fungsi start game dengan menekan tombol apapun
 def press_any_key():
     while True:
         for event in pygame.event.get():
             if event.type == QUIT:
-                exit_game()
+                exit()
             if event.type == KEYDOWN:
                 if event.key == K_ESCAPE:
-                    exit_game()
+                    exit()
                 return
-    
-def draw_text(text, font, surface, pos, color=GREEN):
-    text_surf = font.render(text, 1, color)
-    surface.blit(text_surf, pos)
 
-def get_blast():
-    blast = {'speed': MAX_SPEED * 3,
+# Fungsi untuk membuat teks   
+def bikin_text(text, font, surface, pos, color=HIJAU):
+    model_text = font.render(text, 1, color)
+    surface.blit(model_text, pos)
+
+# Fungsi untuk ledakan
+def efek_ledakan():
+    ledakan = {'speed': KECEPATAN_MAKS * 3,
              'pos': Vector2(200, 150),
              'rot': 0.0,
              'surf': pygame.Surface((3, 11))}
-    pygame.draw.aaline(blast['surf'], WHITE, [1, 0], [1, 10])
-    return blast
+    pygame.draw.aaline(ledakan['surf'], PUTIH, [1, 0], [1, 10])
+    return ledakan
 
-def new_rock():
-    # Data structure for our asteroid
-    rock = {'speed': random.randint(20, 80),
-            'pos': Vector2(random.randint(0, SCR_W - ROCK_W),
-                           random.randint(0, SCR_H - ROCK_H)),
+# Fungsi untuk membuat asteroid baru
+def objek_asteroid():
+    asteroid = {'speed': random.randint(20, 80),
+            'pos': Vector2(random.randint(0, LEBAR_WINDOW - LEBAR_ASTEROID),
+                           random.randint(0, TINGGI_WINDOW - TINGGI_ASTEROID)),
             'rot': 0.0,
             'rot_speed': random.randint(90, 180) / 1.0,
             'rot_direction': random.choice([-1, 1]),
-            'surf': pygame.Surface((ROCK_W, ROCK_H)),
-            'rect': pygame.Rect(0, 0, ROCK_W, ROCK_H),
+            'surf': pygame.Surface((LEBAR_ASTEROID, TINGGI_ASTEROID)),
+            'rect': pygame.Rect(0, 0, LEBAR_ASTEROID, TINGGI_ASTEROID),
             'hits': 0}
-    
-    # Draw our asteroid using geometric primitives
-    pygame.draw.polygon(rock['surf'], WHITE, ROCK_SHAPE, 1)
-    return rock
+    pygame.draw.polygon(asteroid['surf'], PUTIH, BENTUK_ASTEROID, 1)
+    return asteroid
 
-def new_ship():
-    # Data structure for our spaceship, Vectorize
-    ship = {'speed': 0,
+# Fungsi untuk membuat model pesawat dan mengapply posisinya menggunakan vektor (realtime position)
+def objek_pesawat():
+    pesawat = {'speed': 0,
             'pos': Vector2(200, 150),
             'rot': 0.0,
             'rot_speed': 360.0,
-            'surf': pygame.Surface((SHIP_W, SHIP_H)),
+            'surf': pygame.Surface((LEBAR_PESAWAT, TINGGI_PESAWAT)),
             'new': True}
 
-    # Draws spaceship using geometric primitives
-    pygame.draw.aaline(ship['surf'], GREEN, [0, 20], [8, 0])
-    pygame.draw.aaline(ship['surf'], GREEN, [8, 0], [16, 20])
-    pygame.draw.aaline(ship['surf'], GREEN, [2, 15], [7, 15])
-    pygame.draw.aaline(ship['surf'], GREEN, [14, 15], [9, 15])
-    return ship
+    pygame.draw.aaline(pesawat['surf'], HIJAU, [0, 20], [8, 0])
+    pygame.draw.aaline(pesawat['surf'], HIJAU, [8, 0], [16, 20])
+    pygame.draw.aaline(pesawat['surf'], HIJAU, [2, 15], [7, 15])
+    pygame.draw.aaline(pesawat['surf'], HIJAU, [14, 15], [9, 15])
+    return pesawat
 
-def center_rotate(image, w, h):
+# Fungsi untuk mengubah posisi x dan y pesawat
+def efek_rotasi(image, w, h):
     """Returns the drawing position and where it's heading"""
-    heading_x = sin(image['rot'] * pi / 180.0) # Convert degrees to rads then calculate x component 
-    heading_y = cos(image['rot'] * pi / 180.0) # Convert degrees to rads then calculate y component
-    return Vector2(image['pos'].x - w / 2, image['pos'].y - h / 2), Vector2(heading_x, heading_y)
+    pusat_x = sin(image['rot'] * pi / 180.0) # Diubah derajat ke radius lalu dihitung nilai x
+    pusat_y = cos(image['rot'] * pi / 180.0) # Sama seperti diatas tetapi dicar nilai y-nya
+    return Vector2(image['pos'].x - w / 2, image['pos'].y - h / 2), Vector2(pusat_x, pusat_y)
 
-## Main loop. Initializes PyGame and our game ##
+# Main loop, untuk inisiasi game Asteroid Ace
 def main():
     pygame.init()
-    screen = pygame.display.set_mode(SCR_SIZE)    
+    screen = pygame.display.set_mode(UKURAN_WINDOW)    
     pygame.display.set_caption("Asteroid Ace")
 
-    font_url = resource_path('SFPixelate.ttf')
-    text_url = resource_path('SFPixelate.ttf')
-    welcome_sound_url = resource_path('sfx-01.wav')
-    blaster_sound_url = resource_path('blast.wav')
-    asteroid_hit_sound_url = resource_path('hit.wav')
-    player_collision_sound_url = resource_path('explode.wav')
+    font_url = resource_path('sumber_font.ttf')
+    text_url = resource_path('sumber_font.ttf')
+    welcome_sound_url = resource_path('efek_suara_retro_01.wav')
+    blaster_sound_url = resource_path('ledakan.wav')
+    asteroid_hit_sound_url = resource_path('efek_kena_asteroid.wav')
+    player_collision_sound_url = resource_path('efek_mati.wav')
     
-    title_font = pygame.font.Font(font_url, 72)
+    font_untuk_title = pygame.font.Font(font_url, 72)
     text_font = pygame.font.Font(text_url, 36)
     score_font = pygame.font.Font(None, 72)
 
@@ -125,7 +128,7 @@ def main():
     player_collision_sound = pygame.mixer.Sound(player_collision_sound_url)
 
     screen_rect = screen.get_rect()
-    ship = new_ship()    
+    ship = objek_pesawat()    
     blasts = []
     score = 0
     num_of_lives = 3    
@@ -133,97 +136,96 @@ def main():
     rock_add_counter = 0    
     running = True
 
-    # Displays game title screen and waits for user
-    title_rect = title_font.render('Asteroid Ace', 1, GREEN).get_rect()
-    start_rect = text_font.render('Press any key to start', 1, GREEN).get_rect()
-    draw_text('Asteroid Ace', title_font, screen,
+    # Disini title game akan muncul dan akan menunggu user untuk menekan suatu tombol 
+    title_rect = font_untuk_title.render('Asteroid Ace', 1, HIJAU).get_rect()
+    start_rect = text_font.render('Tekan Tombol Apapun', 1, HIJAU).get_rect()
+    bikin_text('Asteroid Ace', font_untuk_title, screen,
               (screen_rect.centerx - title_rect.width / 2,
                screen_rect.centery - (title_rect.height + start_rect.height + 10) / 2))
-    draw_text('Press any key to start', text_font, screen,
+    bikin_text('Tekan Tombol Apapun', text_font, screen,
               (screen_rect.centerx - start_rect.width / 2,
                screen_rect.centery + 10))
     global top_score
     if top_score > 0:
-        draw_text('Top score: %s' % str(top_score), text_font, screen, (20, 10), CARNATION)
+        bikin_text('Top score: %s' % str(top_score), text_font, screen, (20, 10), MERAH_MUDA)
     pygame.display.update()
     welcome_sound.play()
     press_any_key()
     clock = pygame.time.Clock()
 
     rocks = []
-    for i in range(NUM_OF_ROCKS):
-        rock = new_rock()        
+    for i in range(JUMLAH_ASTEROID):
+        rock = objek_asteroid()        
         rocks.append(rock)
 
     ## Game loop ##
     while running:
         for event in pygame.event.get():
             if event.type == QUIT:
-                exit_game()
+                exit()
 
         pressed_keys = pygame.key.get_pressed()
         rot_direction = 0.0
         mov_direction = -1
 
         if pressed_keys[K_ESCAPE]:
-            exit_game()
-        if pressed_keys[K_LEFT]: 
+            exit()
+        if pressed_keys[K_a]: 
             rot_direction = +1.0        
-        elif pressed_keys[K_RIGHT]:
+        elif pressed_keys[K_d]:
             rot_direction = -1.0        
-        if pressed_keys[K_UP]:
-            ship['speed'] += SPEED_INCREMENT
-            if ship['speed'] > MAX_SPEED: ship['speed'] = MAX_SPEED
-        elif pressed_keys[K_DOWN]:
-            ship['speed'] -= SPEED_DECREMENT
+        if pressed_keys[K_w]:
+            ship['speed'] += TAMBAH_KECEPATAN
+            if ship['speed'] > KECEPATAN_MAKS: ship['speed'] = KECEPATAN_MAKS
+        elif pressed_keys[K_s]:
+            ship['speed'] -= KURANGI_KECEPATAN
             if ship['speed'] < 0: ship['speed'] = 0
         if pressed_keys[K_SPACE]:
-            new_blast = get_blast()
+            new_blast = efek_ledakan()
             new_blast['pos'] = Vector2(ship['pos'].x, ship['pos'].y)
             new_blast['rot'] = ship['rot']
             blasts.append(new_blast)
             blaster_sound.play()
 
-        screen.fill(BLACK)
+        screen.fill(HITAM)
         time_passed = clock.tick(30)
         time_passed_secs = time_passed / 1000.0        
         total_time_passed_secs += time_passed_secs
 
         rock_add_counter += 1
-        if rock_add_counter == ADD_NEW_ROCK_RATE:
+        if rock_add_counter == TINGKAT_ASTEROID_BARU:
             rock_add_counter = 0
-            rock = new_rock()
-            rock['pos'] = Vector2(0 - ROCK_W, random.randint(0, SCR_H - ROCK_H))
+            rock = objek_asteroid()
+            rock['pos'] = Vector2(0 - LEBAR_ASTEROID, random.randint(0, TINGGI_WINDOW - TINGGI_ASTEROID))
             rocks.append(rock)
 
-        ## Updates the blasts ##
+        # Fungsi for loop untuk tembakan
         for blast in blasts[:]:            
-            # The first time around the blast is not yet rotated
+            # Tembakan yang tidak berotasi terhadap posisi x dan y pesawat
             rotated_blast_surf = pygame.transform.rotate(blast['surf'], blast['rot'])
 
-            # The rotated surface may not return the same dimensions as the original
+            # Jika iya buat fungsi baru untuk mendapat size
             bw, bh = rotated_blast_surf.get_size()
 
-            # We adjust our x and y so that the center of the blast is in the original
-            # x and y position
-            blast_draw_pos, b_heading = center_rotate(blast, bw, bh)
+            # Membuat fungsi agar tembakan pesawat linear dengan posisi pesawat real time
+            blast_draw_pos, b_heading = efek_rotasi(blast, bw, bh)
             b_heading *= mov_direction
 
-            # New position time based
+            # Projectile tembakan akan sesuai real time
             blast['pos'] += b_heading * time_passed_secs * blast['speed']
 
-            # Removes blasts that has left the edges of the screen from list.
+            # Jika tembakannya keluar dari jendela maka akan diremove dari list
             if blast['pos'].y < 0 and blast in blasts:
                 blasts.remove(blast)
-            if blast['pos'].y + bh > SCR_H and blast in blasts:
+            if blast['pos'].y + bh > TINGGI_WINDOW and blast in blasts:
                 blasts.remove(blast)
             if blast['pos'].x < 0 and blast in blasts:
                 blasts.remove(blast)
-            if blast['pos'].x + bw > SCR_W and blast in blasts:
+            if blast['pos'].x + bw > LEBAR_WINDOW and blast in blasts:
                 blasts.remove(blast)
 
-            # Checks if enemy was hit by blast and split it in two
-            # Remove from list if it has already been hit a couple of times
+            # Untuk mengecek apakah ada asteroid yang terkena tembakan pesawat
+            # Jika tembakannya kena asteroid, hapus tembakan yang terkena tersebut dari list
             blast_rect = pygame.Rect(blast_draw_pos.x, blast_draw_pos.y, bw, bh)
             for rock in rocks[:]:
                 if blast_rect.colliderect(rock['rect']) and blast in blasts:
@@ -231,7 +233,7 @@ def main():
                     rotated_rock_surf = pygame.transform.rotate(rock['surf'], rock['rot'])        
                     rw, rh = rotated_rock_surf.get_size()
 
-                    rock_half = new_rock()
+                    rock_half = objek_asteroid()
                     rock_half['pos'] = Vector2(rock['pos'].x, rock['pos'].y)                    
 
                     rock['pos'].y -= rh + (rh / 2)
@@ -254,25 +256,25 @@ def main():
 
             screen.blit(rotated_blast_surf, blast_draw_pos)
 
-        ## Updates the asteroids, the same thing as the blasts ##
+        ## Fungsi yang sama dengan tembakan tapi untuk asteroid
         for rock in rocks[:]:
             rotated_rock_surf = pygame.transform.rotate(rock['surf'], rock['rot'])        
             rw, rh = rotated_rock_surf.get_size()
             rock['rot'] += rock['rot_direction'] * rock['rot_speed'] * time_passed_secs
-            rock_draw_pos, r_heading = center_rotate(rock, rw, rh)        
+            rock_draw_pos, r_heading = efek_rotasi(rock, rw, rh)        
             rock['pos'].x += 1.0 * time_passed_secs * rock['speed']        
             rock['rect'] = pygame.Rect(rock_draw_pos.x, rock_draw_pos.y, rw, rh)
 
             if rock['pos'].y < 0:
                 rocks.remove(rock)                
-            if rock['pos'].y + rh > SCR_H:
+            if rock['pos'].y + rh > TINGGI_WINDOW:
                 rocks.remove(rock)
-            if rock['pos'].x > SCR_W + ROCK_W:
-                rock['pos'].x = -ROCK_W
+            if rock['pos'].x > LEBAR_WINDOW + LEBAR_ASTEROID:
+                rock['pos'].x = -LEBAR_ASTEROID
 
             screen.blit(rotated_rock_surf, rock_draw_pos)
 
-        ## Updates the player, the same thing as the blasts ##
+        ## Update posisi antara asteroid dan pesawat
         if total_time_passed_secs >= 5:
             ship['new'] = False
             total_time_passed_secs = 0            
@@ -280,57 +282,57 @@ def main():
         rotated_ship_surf = pygame.transform.rotate(ship['surf'], ship['rot'])        
         sw, sh = rotated_ship_surf.get_size()
         
-        # This is for the spaceship's rotation--time based
+        # Ubah posisi peswat secara real time
         ship['rot'] += rot_direction * ship['rot_speed'] * time_passed_secs
         
-        ship_draw_pos, s_heading = center_rotate(ship, sw, sh)
+        ship_draw_pos, s_heading = efek_rotasi(ship, sw, sh)
         s_heading *= mov_direction        
         ship['pos'] += s_heading * time_passed_secs * ship['speed']
 
-        # Stops player from leaving the edges of the screen
+        # Mencegah pesawat keluar dari batas jendela
         if ship['pos'].y < sh:
             ship['pos'].y = sh
-        if ship['pos'].y + sh > SCR_H:
-            ship['pos'].y = SCR_H - sh
+        if ship['pos'].y + sh > TINGGI_WINDOW:
+            ship['pos'].y = TINGGI_WINDOW - sh
         if ship['pos'].x < sw:
             ship['pos'].x = sw
-        if ship['pos'].x + sw > SCR_W:
-            ship['pos'].x = SCR_W - sw
+        if ship['pos'].x + sw > LEBAR_WINDOW:
+            ship['pos'].x = LEBAR_WINDOW - sw
 
-        # Checks if player has collided with an enemy; it doesn't check for the first 5 seconds
+        # Untuk mengecek apakah pesawat terbentur ke asteroid
         ship_rect = pygame.Rect(ship_draw_pos.x, ship_draw_pos.y, sw, sh)
         for rock in rocks[:]:
             if ship_rect.colliderect(rock['rect']) and not ship['new']:
                 total_time_passed_secs = 0
                 num_of_lives -= 1
-                ship = new_ship()
+                ship = objek_pesawat()
                 player_collision_sound.play()
 
-        # Blinks player to indicate time allowance
+        # 5 detik pertama pesawat akan berkedip 
         if ship['new']:
             if total_time_passed_secs > 0.5 and total_time_passed_secs < 1:
-                rotated_ship_surf.fill(BLACK)
+                rotated_ship_surf.fill(HITAM)
             if total_time_passed_secs > 1.5 and total_time_passed_secs < 2:
-                rotated_ship_surf.fill(BLACK)
+                rotated_ship_surf.fill(HITAM)
             if total_time_passed_secs > 2.5 and total_time_passed_secs < 3:
-                rotated_ship_surf.fill(BLACK)
+                rotated_ship_surf.fill(HITAM)
             if total_time_passed_secs > 3.5 and total_time_passed_secs < 4:
-                rotated_ship_surf.fill(BLACK)
+                rotated_ship_surf.fill(HITAM)
             if total_time_passed_secs > 4.5 and total_time_passed_secs < 5:
-                rotated_ship_surf.fill(BLACK)
+                rotated_ship_surf.fill(HITAM)
 
         screen.blit(rotated_ship_surf, ship_draw_pos)            
 
-        ## Displays the score on the left side of the screen ##
-        draw_text(str(score), score_font, screen, (20, 5), CARNATION)
+        # Menampilkan skor untuk player
+        bikin_text(str(score), score_font, screen, (20, 5), MERAH_MUDA)
 
-        ## Displays the number of lives left ##
+        # Menampilkan berapa nyawa lagi yang tersisa
         x = 28
         for i in range(num_of_lives):        
             screen.blit(ship['surf'], (x, 60))
-            x += SHIP_W + 10
+            x += LEBAR_PESAWAT + 10
 
-        # Displays "Game Over!" if no more lives left
+        # Jika tidak ada nyawa tersisa dan player kalah maka game akan berhenti dan menampilkan game over
         if num_of_lives <= 0:
             running = False
             screen_copy = screen.copy()
@@ -338,14 +340,14 @@ def main():
             
             if score > top_score:
                 top_score = score
-                top_score_rect = text_font.render('New Top Score: %s!' % str(top_score), 1, GREEN).get_rect()
-                draw_text('New Top Score: %s!' % str(top_score), text_font, screen,
+                top_score_rect = text_font.render('New Top Score: %s!' % str(top_score), 1, HIJAU).get_rect()
+                bikin_text('New Top Score: %s!' % str(top_score), text_font, screen,
                           (screen_rect.centerx - top_score_rect.width / 2, 100))                
                 pygame.display.update()
                 pygame.time.wait(4000)
 
-            game_over_rect = title_font.render('Game Over!', 1, GREEN).get_rect()
-            draw_text('Game Over!', title_font, screen_copy,
+            game_over_rect = font_untuk_title.render('Game Over!', 1, HIJAU).get_rect()
+            bikin_text('Game Over!', font_untuk_title, screen_copy,
                       (screen_rect.centerx - game_over_rect.width / 2,
                        screen_rect.centery - game_over_rect.height / 2))
             screen.blit(screen_copy, (0, 0))
